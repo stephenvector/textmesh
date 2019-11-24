@@ -38,6 +38,16 @@ type ButtonBarButtonProps = ButtonBarProps & {
   setDrawingStyle(drawingStyle: DrawingStyle): void;
 };
 
+type Line = {
+  points: XY[] 
+}
+
+type Box = {
+  topLeft: XY,
+  bottomRight: XY,
+  content: string
+}
+
 function ButtonBarButton({
   setDrawingStyle,
   drawingStyle,
