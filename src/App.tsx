@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 const board = Array(23).fill(Array(23).fill(0));
 
-console.log(board);
-
 function generateBlankString(width: number, height: number, xy: XY) {
   let stringValue = "";
   for (let i = 0; i < height; i++) {
@@ -39,14 +37,20 @@ type ButtonBarButtonProps = ButtonBarProps & {
 };
 
 type Line = {
-  points: XY[] 
-}
+  startPoint: XY;
+  endPoint: XY;
+};
 
 type Box = {
-  topLeft: XY,
-  bottomRight: XY,
-  content: string
-}
+  startPoint: XY;
+  endPoint: XY;
+  content: string;
+};
+
+type CurrentlyDrawingItem = {
+  line: Line | null;
+  box: Box | null;
+};
 
 function ButtonBarButton({
   setDrawingStyle,
@@ -98,6 +102,11 @@ const App: React.FC = () => {
   const [width] = useState(100);
   const [height] = useState(50);
 
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentlyDrawingItem, setCurrentlyDrawingItem] = useState<
+    CurrentlyDrawingItem
+  >({ line: null, box: null });
+
   const [drawingStyle, setDrawingStyle] = useState<DrawingStyle>("none");
   const ref = useRef<HTMLElement>(null);
 
@@ -105,7 +114,33 @@ const App: React.FC = () => {
   const [value, setValue] = useState(generateBlankString(width, height, xy));
 
   useEffect(() => {
-    setValue(generateBlankString(width, height, xy));
+    let newValue = generateBlankString(width, height, xy);
+
+    if (currentlyDrawingItem.box !== null) {
+      for (
+        let x = currentlyDrawingItem.box.startPoint.x;
+        x <= currentlyDrawingItem.box.endPoint.x;
+        x++
+      ) {
+        for (
+          let y = currentlyDrawingItem.box.startPoint.y;
+          y <= currentlyDrawingItem.box.endPoint.y;
+          y++
+        ) {
+          let index = y * width + x;
+          // newValue = [
+          //   ...newValue.slice(0, index),
+          //   "&#9618",
+          //   ...newValue.slice(index + 1)
+          // ];
+        }
+      }
+    }
+
+    if (currentlyDrawingItem.line !== null) {
+    }
+
+    setValue(newValue);
   }, [xy, height, width]);
 
   return (
@@ -117,6 +152,43 @@ const App: React.FC = () => {
       <pre>
         <code
           ref={ref}
+          onMouseDown={e => {
+            setIsDrawing(true);
+
+            if (ref === null || ref.current === null) {
+              return;
+            }
+
+            const refRect = ref.current.getBoundingClientRect();
+
+            const left = e.clientX - refRect.left;
+            const top = e.clientY - refRect.top;
+
+            const x = Math.floor((width * left) / refRect.width);
+            const y = Math.floor((height * top) / refRect.height);
+
+            if (drawingStyle === "box") {
+              setCurrentlyDrawingItem({
+                box: {
+                  content: "",
+                  startPoint: { x, y },
+                  endPoint: { x, y }
+                },
+                line: null
+              });
+            } else if (drawingStyle === "line") {
+              setCurrentlyDrawingItem({
+                line: {
+                  startPoint: { x, y },
+                  endPoint: { x, y }
+                },
+                box: null
+              });
+            }
+          }}
+          onMouseUp={() => {
+            setIsDrawing(false);
+          }}
           onMouseMove={e => {
             if (ref === null || ref.current === null) {
               return;
@@ -130,6 +202,17 @@ const App: React.FC = () => {
             const newX = Math.floor((width * left) / refRect.width);
             const newY = Math.floor((height * top) / refRect.height);
             setXY({ x: newX, y: newY });
+
+            if (isDrawing) {
+              if (drawingStyle === "box" && currentlyDrawingItem.box !== null) {
+                currentlyDrawingItem.box.endPoint = { x: newX, y: newY };
+              } else if (
+                drawingStyle === "line" &&
+                currentlyDrawingItem.line !== null
+              ) {
+                currentlyDrawingItem.line.endPoint = { x: newX, y: newY };
+              }
+            }
           }}
         >
           {value}
