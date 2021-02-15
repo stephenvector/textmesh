@@ -7,9 +7,3 @@ export interface Box {
 }
 
 export type Boxes = Record<string, Box>;
-
-export enum InteractionMode {
-  Select = "select",
-  Draw = "draw",
-  Move = "move",
-}

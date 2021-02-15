@@ -1,66 +1,98 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import styled from "styled-components";
-import { Boxes, InteractionMode, Box as BoxType } from "./types";
+import { Box as BoxType } from "./types";
 import Box from "./Box";
+import { useBoxes } from "./BoxContext";
 
-interface IStyledWhiteboardProps {
-  isDrawing: boolean;
+interface CurrentlyDrawingBox {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
 }
 
-const StyledWhiteboard = styled.div<IStyledWhiteboardProps>`
+const CurrentBox = styled.div<{ box: CurrentlyDrawingBox }>`
+  position: fixed;
+  left: ${(p) => `${p.box.startX < p.box.endX ? p.box.startX : p.box.endX}px`};
+  top: ${(p) => `${p.box.startY < p.box.endY ? p.box.startY : p.box.endY}px`};
+  width: ${(p) => `${Math.abs(p.box.endX - p.box.startX)}px`};
+  height: ${(p) => `${Math.abs(p.box.startY - p.box.endY)}px`};
+  background: pink;
+`;
+
+const StyledWhiteboard = styled.div`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: ${(p) => (p.isDrawing ? "#f2f2f2" : "#fff")};
+  background: #fff;
   z-index: 0;
 `;
 
-interface IWhiteboardProps {
-  boxes: Boxes;
-  addBox: (x: number, y: number) => void;
-  deleteBox: (boxId: string) => void;
-  updateBox: (boxId: string, newBoxValue: BoxType) => void;
-  currentInteractionMode: InteractionMode;
-}
-
-const Whiteboard: React.FC<IWhiteboardProps> = (props) => {
-  const { boxes, addBox, updateBox, currentInteractionMode, deleteBox } = props;
-
+const Whiteboard: React.FC = (props) => {
+  const { boxes, addBox, updateBox, deleteBox, selectedBoxId } = useBoxes();
+  const [currentBox, setCurrentBox] = useState<CurrentlyDrawingBox | null>(
+    null
+  );
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
 
   const handleOnClick = useCallback<React.MouseEventHandler>(() => {}, []);
 
-  const handleDoubleClick = useCallback<React.MouseEventHandler>(
-    (e) => {
-      addBox(e.clientX, e.clientY);
-    },
-    [addBox]
-  );
-
   const handleMouseUp = useCallback(() => {
     setIsMouseDown(false);
-  }, []);
+    if (currentBox !== null) {
+      const newBox: BoxType = {
+        x:
+          currentBox.startX < currentBox.endX
+            ? currentBox.startX
+            : currentBox.endX,
+        y:
+          currentBox.startY < currentBox.endY
+            ? currentBox.startY
+            : currentBox.endY,
+        content: "",
+        width: Math.abs(currentBox.startX - currentBox.endX),
+        height: Math.abs(currentBox.startY - currentBox.endY),
+      };
+      addBox(newBox);
+      setCurrentBox(null);
+    }
+  }, [currentBox, addBox]);
 
-  const handleMouseDown = useCallback(() => {
-    setIsMouseDown(true);
-  }, []);
-
-  const handleMouseMove = useCallback<React.MouseEventHandler>(
-    (e) => {
-      if (isMouseDown) {
-        console.log(e.clientX, e.clientY);
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      setIsMouseDown(true);
+      if (currentBox === null) {
+        setCurrentBox({
+          startX: event.clientX,
+          startY: event.clientY,
+          endX: event.clientX,
+          endY: event.clientY,
+        });
+      } else {
+        setCurrentBox({
+          ...currentBox,
+          endX: event.clientX,
+          endY: event.clientY,
+        });
       }
     },
-    [isMouseDown]
+    [currentBox]
   );
 
-  const isDrawing = useMemo(() => {
-    if (currentInteractionMode !== InteractionMode.Draw) return false;
-
-    return isMouseDown;
-  }, [currentInteractionMode, isMouseDown]);
+  const handleMouseMove = useCallback<React.MouseEventHandler>(
+    (event) => {
+      if (isMouseDown && currentBox !== null) {
+        setCurrentBox({
+          ...currentBox,
+          endX: event.clientX,
+          endY: event.clientY,
+        });
+      }
+    },
+    [isMouseDown, currentBox]
+  );
 
   return (
     <StyledWhiteboard
@@ -68,8 +100,6 @@ const Whiteboard: React.FC<IWhiteboardProps> = (props) => {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
-      isDrawing={isDrawing}
-      onDoubleClick={handleDoubleClick}
     >
       {Object.entries(boxes).map(([boxId, box]) => (
         <Box
@@ -78,8 +108,10 @@ const Whiteboard: React.FC<IWhiteboardProps> = (props) => {
           box={box}
           updateBox={updateBox}
           deleteBox={deleteBox}
+          isSelected={selectedBoxId === boxId}
         />
       ))}
+      {currentBox !== null && <CurrentBox box={currentBox} />}
     </StyledWhiteboard>
   );
 };
