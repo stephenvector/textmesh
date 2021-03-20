@@ -31,7 +31,14 @@ const StyledWhiteboard = styled.div`
 `;
 
 const Whiteboard: React.FC = (props) => {
-  const { boxes, addBox, updateBox, deleteBox, selectedBoxId } = useBoxes();
+  const {
+    boxes,
+    addBox,
+    updateBox,
+    deleteBox,
+    selectedBoxId,
+    selectBox,
+  } = useBoxes();
   const [currentBox, setCurrentBox] = useState<CurrentlyDrawingBox | null>(
     null
   );
@@ -109,6 +116,7 @@ const Whiteboard: React.FC = (props) => {
           updateBox={updateBox}
           deleteBox={deleteBox}
           isSelected={selectedBoxId === boxId}
+          selectBox={selectBox}
         />
       ))}
       {currentBox !== null && <CurrentBox box={currentBox} />}

@@ -20,18 +20,19 @@ interface IBoxProps {
   deleteBox: (boxIdToDelete: string) => void;
   updateBox: (boxIdToUpdate: string, newBoxValues: BoxType) => void;
   isSelected: boolean;
+  selectBox: (boxIdToSelect: string) => void;
 }
 
-const Box: React.FC<IBoxProps> = (props) => {
+const Box: React.FC<IBoxProps> = ({ isSelected, selectBox, boxId, box }) => {
   return (
     <StyledBox
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
-        alert("NO");
+        selectBox(boxId);
       }}
-      box={props.box}
-      isSelected={props.isSelected}
+      box={box}
+      isSelected={isSelected}
     />
   );
 };
