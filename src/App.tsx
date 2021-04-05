@@ -1,5 +1,5 @@
 import React from "react";
-import { BoxProvider } from "./BoxContext";
+import BoxProvider from "./BoxProvider";
 import Whiteboard from "./Whiteboard";
 import BoxesList from "./BoxesList";
 
