@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import { Box as BoxType } from "./types";
 import Box from "./Box";
-import { useBoxes } from "./BoxContext";
+import useBoxes from "./useBoxes";
 
 interface CurrentlyDrawingBox {
   startX: number;

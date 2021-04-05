@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { IoListCircle } from "react-icons/io5";
-import { useBoxes } from "./BoxContext";
+import useBoxes from "./useBoxes";
 
 const BoxListToggleButton = styled.button`
   position: fixed;
